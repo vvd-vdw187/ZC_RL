@@ -88,12 +88,12 @@ class DQN:
         if np.random.random() <= self.epsilon:
             action =  self.env.action_space.sample()
         else:
-            action = torch.argmax(self.model(state.to(self.device)).cpu().detach().numpy()).item()
+            action = torch.argmax(self.model(state.to(self.device))).item()
         self._decay()
         return action
     
     def _take_step(self, action: int) -> tuple[torch.Tensor, float, bool]:
-        next_state, reward, done, _, _ = self.env.step(action)
+        next_state, reward, done, *_ = self.env.step(action) # Will return a different amount of, in this case unimportant, variables depending on the gym version.
         next_state = self._process_observation_to_torch(next_state)
         return next_state, reward, done
         
@@ -166,6 +166,7 @@ class DQN:
             print(f"Episode: {episode}, reward: {np.mean(self.rewards)}.")
 
     # play without training
+    # Do this seperate
     def play(self, num_episodes: int = 100) -> None:
         state = self._reset_env()
         for episode in range(num_episodes):
