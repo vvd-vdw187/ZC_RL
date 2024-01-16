@@ -56,6 +56,9 @@ class DQN:
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+        self.model.to(self.device)
+        self.target_model.to(self.device)
+
         # self._populate_replay_buffer() # Maybe here or in train function?
         print("Post init:")
         print(self.__str__())
