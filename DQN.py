@@ -47,17 +47,16 @@ class DQN:
         return str
 
     def __post_init__(self) -> None:
+        self.target_model = deepcopy(self.model)
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
+        self.target_model.to(self.device)
+
         if self.optimizer == "Adam":
             self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         else:
             raise NotImplementedError(f"Optimizer {self.optimizer} not implemented.")
-
-        self.target_model = deepcopy(self.model)
-
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        self.model.to(self.device)
-        self.target_model.to(self.device)
 
         # self._populate_replay_buffer() # Maybe here or in train function?
         print("Post init:")
