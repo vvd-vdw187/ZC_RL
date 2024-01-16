@@ -42,7 +42,8 @@ class DQN:
         str += f"epsilon_decay: {self.epsilon_decay}\n"
         str += f"epsilon_min: {self.epsilon_min}\n"
         str += f"mean loss: {np.mean(self.losses)}\n"
-        str += f"mean reward: {np.mean(self.rewards)}\n"
+        str += f"mean train reward: {np.mean(self.train_rewards)}\n"
+        str += f"mean val reward: {np.mean(self.val_rewards)}\n"
         str += f"Model: {self.model}\n"
         str += "-"*80 + "\n"
         return str
