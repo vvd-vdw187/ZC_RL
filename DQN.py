@@ -123,7 +123,7 @@ class DQN:
         actions = torch.tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
         rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1).to(self.device)
         next_states = torch.cat(next_states).to(self.device)
-        dones = torch.tensor(dones, dtype=torch.float32)
+        dones = torch.tensor(dones, dtype=torch.float32).to(self.device)
 
         
         current_q_values = self.model(states.to(self.device)).gather(1, actions.view(actions.size(0), 1))
