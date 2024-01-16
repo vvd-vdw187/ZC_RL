@@ -101,20 +101,22 @@ class RandomSearch:
             dqn.play_and_train(train_iterations)
             dqn.play()
             # add the model to the pool
-            pool.append((np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
+            pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
+            
             print("model ", i, " trained:")
             print("train reward: ", np.mean(dqn.train_rewards))
             print("val reward: ", np.mean(dqn.val_rewards))
             print("losses: ", np.mean(dqn.losses))
 
-        print("pool: ", pool)
+        # Dont print the full models for clarity
+        print("pool: ", [item[:3] for item in pool])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--Testing", help="Run 1 of everything to test the code.", action="store_true")
     args = parser.parse_args()
     if args.Testing:
-        num_models = 1
+        num_models = 10
         train_iterations = 1
         max_model_size = 1
     else:
