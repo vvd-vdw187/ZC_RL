@@ -5,7 +5,9 @@
 - Pass the model to the DQN. x
 - Test random search without GraSP. x
     - test it with working models and store performance x
-    - test is on google collab, one-shot paper uses 10*6 training steps.
+    - test is on google collab, one-shot paper uses 10*6 training steps.x
         - Implement device in agent. x
+    - save models
+- Maybe change the fill replay buffer?
 - Implement GraSP in RS. 
 - Test RS with GraSP.

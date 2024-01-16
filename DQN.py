@@ -86,11 +86,15 @@ class DQN:
     def _decay(self) -> None:
         self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
 
-    def _epsilon_greedy(self, state: torch.Tensor) -> int:
+    def _epsilon_greedy(self, state: torch.Tensor, eval: bool = False) -> int:
         if np.random.random() <= self.epsilon:
             action =  self.env.action_space.sample()
         else:
-            action = torch.argmax(self.model(state.to(self.device))).item()
+            if eval:
+                with torch.no_grad():
+                    action = torch.argmax(self.model(state.to(self.device))).item()
+            else:
+                action = torch.argmax(self.model(state.to(self.device))).item()
         self._decay()
         return action
     
@@ -125,7 +129,7 @@ class DQN:
         next_states = torch.cat(next_states).to(self.device)
         dones = torch.tensor(dones, dtype=torch.float32).to(self.device)
 
-        
+        optimizer.zero_grad()
         current_q_values = self.model(states.to(self.device)).gather(1, actions.view(actions.size(0), 1))
         # print(current_q_values.shape)
         next_q_values = self.target_model(next_states.to(self.device))
@@ -148,7 +152,7 @@ class DQN:
         for episode in range(num_episodes):
 
             # take a step in the environment
-            action = self._epsilon_greedy(state)
+            action = self._epsilon_greedy(state, eval=False)
             next_state, reward, done = self._take_step(action)
 
             self.replay_buffer.add(state, action, reward, next_state, done)
@@ -172,7 +176,7 @@ class DQN:
     def play(self, num_episodes: int = 100) -> None:
         state = self._reset_env()
         for episode in range(num_episodes):
-            action = self._epsilon_greedy(state)
+            action = self._epsilon_greedy(state, eval=True)
             next_state, reward, done = self._take_step(action)
             self.rewards.append(reward)
             if done:
