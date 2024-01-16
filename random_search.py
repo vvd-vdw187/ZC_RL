@@ -99,10 +99,12 @@ class RandomSearch:
             # train the model
             dqn = DQN(model, deepcopy(self.env))
             dqn.play_and_train(train_iterations)
+            dqn.play()
             # add the model to the pool
             pool.append((np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
             print("model ", i, " trained:")
-            print("reward: ", np.mean(dqn.rewards))
+            print("train reward: ", np.mean(dqn.train_rewards))
+            print("val reward: ", np.mean(dqn.val_rewards))
             print("losses: ", np.mean(dqn.losses))
 
         print("pool: ", pool)
