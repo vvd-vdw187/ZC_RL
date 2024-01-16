@@ -124,9 +124,9 @@ class DQN:
         dones = torch.tensor(dones, dtype=torch.float32)
 
         
-        current_q_values = self.model(states).gather(1, actions.view(actions.size(0), 1))
+        current_q_values = self.model(states.to(self.device)).gather(1, actions.view(actions.size(0), 1))
         # print(current_q_values.shape)
-        next_q_values = self.target_model(next_states)
+        next_q_values = self.target_model(next_states.to(self.device))
         max_q_next = torch.max(next_q_values, 1)[0]
         max_q_next = max_q_next.view(max_q_next.size(0), 1)
 
