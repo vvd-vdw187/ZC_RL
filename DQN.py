@@ -171,7 +171,7 @@ class DQN:
             else:
                 state = next_state
 
-            print(f"Episode: {episode}, reward: {np.mean(self.rewards)}.")
+            print(f"Episode: {episode}, reward: {reward}, total reward: {sum(self.train_rewards)}, mean reward: {np.mean(self.train_rewards)}.")
 
     # play without training
     # Do this seperate
@@ -186,4 +186,4 @@ class DQN:
                 state = self._reset_env()
             else:
                 state = next_state
-            print(f"Episode: {episode}, reward: {np.mean(self.rewards)}.")
+            print(f"Episode: {episode}, reward: {reward}, total reward: {sum(self.val_rewards)}, mean reward: {np.mean(self.val_rewards)}.")
