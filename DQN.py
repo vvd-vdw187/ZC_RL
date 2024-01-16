@@ -19,7 +19,7 @@ class DQN:
     env: gym.Env 
     lr: float = 0.0001
     optimizer: str = "Adam"
-    update_target_model_every: int = 10
+    update_target_model_every: int = 32
     init_buffer_percentage: float = 0.1
     discount_factor: float = 0.99 # What should this be?
 
@@ -108,15 +108,17 @@ class DQN:
         # until the replay buffer is filled to the init_buffer_percentage size.
         replay_buffer_init_size = self.replay_buffer.buffer_size * self.init_buffer_percentage 
         state = self._reset_env()
+        original_epsilon = self.epsilon 
 
         while len(self.replay_buffer) < replay_buffer_init_size:
-            action = self.env.action_space.sample()
+            action = self._epsilon_greedy(state, eval=True)
             next_state, reward, done = self._take_step(action)
             self.replay_buffer.add(state, action, reward, next_state, done)
             if done:
                 state = self._reset_env()
             else:
                 state = next_state  
+        self.epsilon = original_epsilon
     
     # Training utility functions
     def _learn_on_batch(self, batch_size: int = 32) -> None:
