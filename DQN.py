@@ -28,7 +28,8 @@ class DQN:
     epsilon_min: float = 0.0
 
     losses: list[float] = field(default_factory=list)
-    rewards: list[float] = field(default_factory=list)
+    train_rewards: list[float] = field(default_factory=list)
+    val_rewards: list[float] = field(default_factory=list)
 
     replay_buffer: ReplayBuffer = ReplayBuffer()
 
@@ -163,7 +164,7 @@ class DQN:
             if episode % self.update_target_model_every == 0:
                 self._update_target_model()
 
-            self.rewards.append(reward)
+            self.train_rewards.append(reward)
             if done:
                 state = self._reset_env()
             else:
@@ -175,10 +176,11 @@ class DQN:
     # Do this seperate
     def play(self, num_episodes: int = 100) -> None:
         state = self._reset_env()
+        
         for episode in range(num_episodes):
             action = self._epsilon_greedy(state, eval=True)
             next_state, reward, done = self._take_step(action)
-            self.rewards.append(reward)
+            self.val_rewards.append(reward)
             if done:
                 state = self._reset_env()
             else:

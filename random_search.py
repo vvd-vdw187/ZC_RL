@@ -100,7 +100,7 @@ class RandomSearch:
             dqn = DQN(model, deepcopy(self.env))
             dqn.play_and_train(train_iterations)
             # add the model to the pool
-            pool.append((np.mean(dqn.rewards), np.mean(dqn.losses), model))
+            pool.append((np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
             print("model ", i, " trained:")
             print("reward: ", np.mean(dqn.rewards))
             print("losses: ", np.mean(dqn.losses))
@@ -114,13 +114,15 @@ if __name__ == "__main__":
     if args.Testing:
         num_models = 1
         train_iterations = 1
+        max_model_size = 1
     else:
         # Update later
-        num_models = 1
+        num_models = 5
         train_iterations = 1000
+        max_model_size = 5
 
     env = gym.make('Freeway-v4')
-    RS = RandomSearch(env)
+    RS = RandomSearch(env, max_size=max_model_size)
     RS.search(max_models=num_models, train_iterations=train_iterations)
 
     
