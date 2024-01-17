@@ -105,7 +105,7 @@ class DQN:
         next_state = self._process_observation_to_torch(next_state)
         return next_state, reward, done
         
-    def _populate_replay_buffer(self) -> None:    
+    def populate_replay_buffer(self) -> None:    
         # Populate the replay buffer with random actions 
         # until the replay buffer is filled to the init_buffer_percentage size.
         replay_buffer_init_size = self.replay_buffer.buffer_size * self.init_buffer_percentage 
@@ -122,11 +122,9 @@ class DQN:
                 state = next_state  
         self.epsilon = original_epsilon
     
-    # Training utility functions
-    def _learn_on_batch(self, batch_size: int = 32) -> None:
-        batch = self.replay_buffer.sample(batch_size)
-        states, actions, rewards, next_states, dones = zip(*batch)
-
+    # Does not perform gradient updates as it is also used in GraSP
+    def loss(self, states: torch.Tensor, actions: int, rewards: float, next_states: torch.Tensor, dones: bool) -> torch.Tensor:
+        # Compute loss
         states = torch.cat(states).to(self.device)
         actions = torch.tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
         rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1).to(self.device)
@@ -142,6 +140,26 @@ class DQN:
         expected_q_values = rewards + (1 - dones) * self.discount_factor * max_q_next
 
         loss = nn.MSELoss()(current_q_values, expected_q_values)
+        return loss
+    
+    # Training utility functions
+    def _learn_on_batch(self, batch_size: int = 32) -> None:
+        batch = self.replay_buffer.sample(batch_size)
+        states, actions, rewards, next_states, dones = zip(*batch)
+
+        # Compute loss
+        loss = self.loss(states, actions, rewards, next_states, dones)
+
+        # Moved because of GraSP implementation.
+        # self.optimizer.zero_grad()
+        # current_q_values = self.model(states.to(self.device)).gather(1, actions.view(actions.size(0), 1))
+        # next_q_values = self.target_model(next_states.to(self.device))
+        # max_q_next = torch.max(next_q_values, 1)[0]
+        # max_q_next = max_q_next.view(max_q_next.size(0), 1)
+
+        # expected_q_values = rewards + (1 - dones) * self.discount_factor * max_q_next
+
+        # loss = nn.MSELoss()(current_q_values, expected_q_values)
 
         # Optimize the model
         loss.backward()
@@ -149,7 +167,7 @@ class DQN:
 
     # Training functions
     def play_and_train(self, num_episodes: int = 100) -> None: 
-        self._populate_replay_buffer()
+        self.populate_replay_buffer()
         state = self._reset_env()     
         for episode in range(num_episodes):
 

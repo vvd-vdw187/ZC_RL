@@ -17,12 +17,13 @@ from copy import deepcopy
 import numpy as np
 import gym
 
+
 import argparse
 
 from replay_buffer import ReplayBuffer
 # from agents import DQN
 from DQN import DQN
-
+from GraSP import GraSP
 random.seed = 42
 class RandomSearch:
     def __init__(self, env, max_size=3):
@@ -84,32 +85,53 @@ class RandomSearch:
 
     def search(self, max_models = 1, zero_cost_warmup = 0, train_iterations = 1000):
         num_trained_models = 0
-        pool = [] # (reward, losses, model) tuples
-
-        if zero_cost_warmup > 0:
-            #TODO
-            pass
-
+        pool = [] # (i, reward, losses, model) tuples
+        zero_cost_pool = [] # (i, grasp_metric, model) tuples
         channels = self.env.observation_space.shape[2]
         action_size = self.env.action_space.n
-        
-        for i in range(max_models):
-            # sample a random architecture
-            model = self.sample_arch(channels, action_size)
-            # train the model
-            dqn = DQN(model, deepcopy(self.env))
-            dqn.play_and_train(train_iterations)
-            dqn.play()
-            # add the model to the pool
-            pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
+        if zero_cost_warmup > 0:
+            for i in range(zero_cost_warmup):
+                # sample a random architecture
+                model = self.sample_arch(channels, action_size)
+                dqn = DQN(model, deepcopy(self.env))
+                mask = GraSP(dqn)
+                print(mask)
+                print(mask[0].shape)
+                i = 0
+                for layer in dqn.model.modules():
+                    if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
+                        with torch.no_grad():
+                            layer.weight.data *= mask[i]
+                        i+=1
+                # dqn.play_and_train(train_iterations)
+                dqn.play()
+        #     # add the model to the pool
+                print("model ", i, "rewards: ", dqn.val_rewards)
+                zero_cost_pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
+                # zero_cost_pool.append((i, model))
+        # Print every row of the tensor in the pool
+        # torch.set_printoptions(profile="full")
+        # [[print(row) for row in item[1]] for item in zero_cost_pool]
+
+
+        # for i in range(max_models):
+        #     # sample a random architecture
+        #     model = self.sample_arch(channels, action_size)
+        #     # train the model
+        #     dqn = DQN(model, deepcopy(self.env))
+        #     dqn.play_and_train(train_iterations)
+        #     dqn.play()
+        #     # add the model to the pool
+        #     pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
             
-            print("model ", i, " trained:")
-            print("train reward: ", np.mean(dqn.train_rewards))
-            print("val reward: ", np.mean(dqn.val_rewards))
-            print("losses: ", np.mean(dqn.losses))
+        #     print("model ", i, " trained:")
+        #     print("train reward: ", np.mean(dqn.train_rewards))
+        #     print("val reward: ", np.mean(dqn.val_rewards))
+        #     print("losses: ", np.mean(dqn.losses))
 
         # Dont print the full models for clarity
         print("pool: ", [item[:3] for item in pool])
+        print("zero cost pool: ", [item[:3] for item in zero_cost_pool])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -118,16 +140,18 @@ if __name__ == "__main__":
     if args.Testing:
         num_models = 10
         train_iterations = 1
-        max_model_size = 1
+        max_model_size = 5
+        zero_cost_warmup = 10
     else:
         # Update later
         num_models = 5
         train_iterations = 1000
         max_model_size = 5
+        zero_cost_warmup = 1
 
     env = gym.make('Freeway-v4')
     RS = RandomSearch(env, max_size=max_model_size)
-    RS.search(max_models=num_models, train_iterations=train_iterations)
+    RS.search(max_models=num_models, zero_cost_warmup=zero_cost_warmup, train_iterations=train_iterations)
 
     
 
