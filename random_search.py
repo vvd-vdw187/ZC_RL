@@ -26,7 +26,7 @@ from DQN import DQN
 from GraSP import GraSP
 random.seed = 42
 class RandomSearch:
-    def __init__(self, env, max_size=3):
+    def __init__(self, env, max_model_size=3, min_model_size = 3):
         self.architecture_dict = {0:"None"}
         self.functions_list = inspect.getmembers(base_layers, inspect.isfunction)
         # get all of the architectures from base_layers.py
@@ -35,8 +35,10 @@ class RandomSearch:
         functions_list = inspect.getmembers(base_layers, inspect.isfunction)
         for i, func in enumerate(functions_list):
             self.architecture_dict[i+1] = func[1]
-        print(self.architecture_dict)
-        self.max_size = max_size
+        self.max_size = max_model_size
+        self.min_size = min_model_size
+        if self.max_size < self.min_size:
+            raise ValueError("max_size must be greater than or equal to min_size.")
 
         self.env = env
 
@@ -51,7 +53,9 @@ class RandomSearch:
         # sample a random architecture and initiate the layers
         # in_channels = 1
         model = nn.Sequential()
-        for i in range(self.max_size):
+        i = 0
+        while i != self.max_size-1 and i < self.min_size:
+        # for i in range(self.max_size):
             # sample a random architecture
             sampled_arch = random.choice(list(self.architecture_dict.values()))
             # initiate the layer
@@ -63,6 +67,7 @@ class RandomSearch:
             layer = sampled_arch(in_channels=in_channels, out_channels=out_channels)
             # add the layer to the model
             model.add_module(str(i), layer)
+            i+=1
             # set the in_channels for the next layer
             in_channels = out_channels
 
@@ -138,6 +143,7 @@ if __name__ == "__main__":
     if args.Testing:
         num_models = 10
         train_iterations = 1
+        min_model_size = 3
         max_model_size = 5
         zero_cost_warmup = 10
     else:
@@ -148,7 +154,7 @@ if __name__ == "__main__":
         zero_cost_warmup = 1
 
     env = gym.make('Freeway-v4')
-    RS = RandomSearch(env, max_size=max_model_size)
+    RS = RandomSearch(env, max_model_size=max_model_size, min_model_size=min_model_size)
     RS.search(max_models=num_models, zero_cost_warmup=zero_cost_warmup, train_iterations=train_iterations)
 
     
