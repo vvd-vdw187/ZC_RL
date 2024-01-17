@@ -95,18 +95,18 @@ class RandomSearch:
                 model = self.sample_arch(channels, action_size)
                 dqn = DQN(model, deepcopy(self.env))
                 mask = GraSP(dqn)
-                print(mask)
-                print(mask[0].shape)
                 i = 0
                 for layer in dqn.model.modules():
                     if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
                         with torch.no_grad():
                             layer.weight.data *= mask[i]
                         i+=1
-                # dqn.play_and_train(train_iterations)
+                dqn.play_and_train(train_iterations)
                 dqn.play()
         #     # add the model to the pool
-                print("model ", i, "rewards: ", dqn.val_rewards)
+                print("model ", i, " trained:")
+                print("train reward: ", np.mean(dqn.train_rewards))
+                print("val reward: ", np.mean(dqn.val_rewards))
                 zero_cost_pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
                 # zero_cost_pool.append((i, model))
         # Print every row of the tensor in the pool
