@@ -61,8 +61,8 @@ class DQN:
             raise NotImplementedError(f"Optimizer {self.optimizer} not implemented.")
 
         # self._populate_replay_buffer() # Maybe here or in train function?
-        print("Post init:")
-        print(self.__str__())
+        # print("Post init:")
+        # print(self.__str__())
 
     # Utility functions
     def _process_observation_to_torch(self, observation: np.ndarray) -> torch.Tensor:
@@ -149,17 +149,6 @@ class DQN:
 
         # Compute loss
         loss = self.loss(states, actions, rewards, next_states, dones)
-
-        # Moved because of GraSP implementation.
-        # self.optimizer.zero_grad()
-        # current_q_values = self.model(states.to(self.device)).gather(1, actions.view(actions.size(0), 1))
-        # next_q_values = self.target_model(next_states.to(self.device))
-        # max_q_next = torch.max(next_q_values, 1)[0]
-        # max_q_next = max_q_next.view(max_q_next.size(0), 1)
-
-        # expected_q_values = rewards + (1 - dones) * self.discount_factor * max_q_next
-
-        # loss = nn.MSELoss()(current_q_values, expected_q_values)
 
         # Optimize the model
         loss.backward()

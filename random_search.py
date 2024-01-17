@@ -71,9 +71,7 @@ class RandomSearch:
         input_size = self.calculate_linear_output_size(model)
         model.add_module(str(i+1), nn.Linear(input_size, output_channels))
 
-        # model.add_module(str(i+1), nn.Linear(int((out_channels * 10) / 2) , output_channels))
         model.add_module(str(i+2), nn.ReLU()) # Maybe?
-        print("full model: ", model)
         return model
     
     def calculate_linear_output_size(self, model):

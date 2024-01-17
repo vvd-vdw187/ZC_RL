@@ -8,6 +8,7 @@
     - test is on google collab, one-shot paper uses 10*6 training steps.x
         - Implement device in agent. x
     - save models
-- Maybe change the fill replay buffer?
-- Implement GraSP in RS. 
-- Test RS with GraSP.
+- Maybe change the fill replay buffer? x
+- Implement GraSP in RS. x
+- Test RS with GraSP.x
+- Fix different input and target in MSE_loss for grasp.
