@@ -9,10 +9,6 @@ import gym
 
 from replay_buffer import ReplayBuffer
 
-#TODO:
-# First populate the replay buffer with random actions x
-# then do further training
-
 @dataclass
 class DQN:
     model: nn.Module 
@@ -67,15 +63,11 @@ class DQN:
     # Utility functions
     def _process_observation_to_torch(self, observation: np.ndarray) -> torch.Tensor:
         if isinstance(observation, torch.Tensor):
-            # print("observation is already a torch tensor")
             return observation
         if len(np.array(observation, dtype=object).shape) ==3:
-            # print("observation is a numpy array of length 3")
             observation = np.transpose(observation, (2, 0, 1))
         else:
-            # print("observation is a nested numpy array.")
             observation = np.transpose(observation[0], (2, 0, 1))
-        # return torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to(self.device)
         return torch.tensor(observation, dtype=torch.float32).unsqueeze(0)
     
     def _reset_env(self) -> torch.Tensor:
@@ -180,8 +172,8 @@ class DQN:
 
             print(f"Training episode: {episode}, reward: {reward}, total reward: {sum(self.train_rewards)}, mean reward: {np.mean(self.train_rewards)}.", end="\r", flush=True)
         print() # Have not found a better way to do this yet.
+        
     # play without training
-    # Do this seperate
     def play(self, num_episodes: int = 100) -> None:
         state = self._reset_env()
         

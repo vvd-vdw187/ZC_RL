@@ -16,14 +16,12 @@ import torch.nn as nn
 from copy import deepcopy
 import numpy as np
 import gym
-
-
 import argparse
 
 from replay_buffer import ReplayBuffer
-# from agents import DQN
 from DQN import DQN
 from GraSP import GraSP
+
 random.seed = 42
 class RandomSearch:
     def __init__(self, env, max_model_size=3, min_model_size = 3):
@@ -44,25 +42,13 @@ class RandomSearch:
 
     def sample_arch(self, in_channels, output_channels):
         possible_channels= [16,24,32,64]
-        # in_channels = 5
-        # out = 5
-
-        # test returning the model from a function
-        # model = self.architecture_dict[1](in_channels=3, out_channels=10)
-
-        # sample a random architecture and initiate the layers
-        # in_channels = 1
         model = nn.Sequential()
         i = 0
         while i != self.max_size-1 and i < self.min_size:
-        # for i in range(self.max_size):
             # sample a random architecture
             sampled_arch = random.choice(list(self.architecture_dict.values()))
-            # initiate the layer
             if sampled_arch == "None" or i == self.max_size-1:
                 continue
-            # Randomly sample out channels for the layer
-            # out_channels = random.choice(possible_channels) if i != self.max_size-1 else output_channels
             out_channels = random.choice(possible_channels)
             layer = sampled_arch(in_channels=in_channels, out_channels=out_channels)
             # add the layer to the model
@@ -87,7 +73,6 @@ class RandomSearch:
         return output.numel()
 
     def search(self, max_models = 1, zero_cost_warmup = 0, train_iterations = 1000):
-        num_trained_models = 0
         pool = [] # (i, reward, losses, model) tuples
         zero_cost_pool = [] # (i, grasp_metric, model) tuples
         channels = self.env.observation_space.shape[2]
@@ -111,26 +96,21 @@ class RandomSearch:
                 print("train reward: ", np.mean(dqn.train_rewards))
                 print("val reward: ", np.mean(dqn.val_rewards))
                 zero_cost_pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
-                # zero_cost_pool.append((i, model))
-        # Print every row of the tensor in the pool
-        # torch.set_printoptions(profile="full")
-        # [[print(row) for row in item[1]] for item in zero_cost_pool]
 
 
-        # for i in range(max_models):
-        #     # sample a random architecture
-        #     model = self.sample_arch(channels, action_size)
-        #     # train the model
-        #     dqn = DQN(model, deepcopy(self.env))
-        #     dqn.play_and_train(train_iterations)
-        #     dqn.play()
-        #     # add the model to the pool
-        #     pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
+        for i in range(max_models):
+            # sample a random architecture
+            model = self.sample_arch(channels, action_size)
+            # train the model
+            dqn = DQN(model, deepcopy(self.env))
+            dqn.play_and_train(train_iterations)
+            dqn.play()
+            # add the model to the pool
+            pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
             
-        #     print("model ", i, " trained:")
-        #     print("train reward: ", np.mean(dqn.train_rewards))
-        #     print("val reward: ", np.mean(dqn.val_rewards))
-        #     print("losses: ", np.mean(dqn.losses))
+            print("model ", i, " trained:")
+            print("train reward: ", np.mean(dqn.train_rewards))
+            print("val reward: ", np.mean(dqn.val_rewards))
 
         # Dont print the full models for clarity
         print("pool: ", [item[:3] for item in pool])
