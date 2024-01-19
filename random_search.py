@@ -81,12 +81,13 @@ class RandomSearch:
         channels = self.env.observation_space.shape[2]
         action_size = self.env.action_space.n
         if zero_cost_warmup > 0:
-            for i in range(zero_cost_warmup):
+            for i in range(max_models):
                 # sample a random architecture
                 model = self.sample_arch(channels, action_size)
                 dqn = DQN(model, deepcopy(self.env))
-                mask = GraSP(dqn)
+                mask = GraSP(dqn, iters=zero_cost_warmup)
                 i = 0
+                # Insert the weights into the model.
                 for layer in dqn.model.modules():
                     if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
                         with torch.no_grad():
@@ -94,7 +95,7 @@ class RandomSearch:
                         i+=1
                 dqn.play_and_train(train_iterations)
                 dqn.play()
-        #     # add the model to the pool
+                # add the model to the pool
                 print("model ", i, " trained:")
                 print("train reward: ", np.mean(dqn.train_rewards))
                 print("val reward: ", np.mean(dqn.val_rewards))
