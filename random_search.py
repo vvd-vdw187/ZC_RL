@@ -86,13 +86,13 @@ class RandomSearch:
                 model = self.sample_arch(channels, action_size)
                 dqn = DQN(model, deepcopy(self.env))
                 mask = GraSP(dqn, iters=zero_cost_warmup)
-                i = 0
+                j = 0
                 # Insert the weights into the model.
                 for layer in dqn.model.modules():
                     if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
                         with torch.no_grad():
-                            layer.weight.data *= mask[i]
-                        i+=1
+                            layer.weight.data *= mask[j]
+                        j+=1
                 dqn.play_and_train(train_iterations)
                 dqn.play()
                 # add the model to the pool
