@@ -6,11 +6,7 @@ import random
 from DQN import DQN
 
 #https://github.dev/SamsungLabs/zero-cost-nas
-def GraSP(agent: DQN, iters: int=10, data_loop_iters: int=10, training_batch_size: int=64):
-    # Make baseclass for all agents
-    #TODO implement self.device
-    #TODO implement the split data loops as samples from the replay buffer
-
+def GraSP(agent: DQN, iters: int=10, data_loop_iters: int=1, training_batch_size: int=64):
     # Get all the weights from the agent.model
     weights = []
     for layer in agent.model.modules():
@@ -22,13 +18,14 @@ def GraSP(agent: DQN, iters: int=10, data_loop_iters: int=10, training_batch_siz
     # So far only dqn is implemented and it uses this, maybe change in the future.
     agent.populate_replay_buffer()
     random.seed = 42
-    for _ in range(data_loop_iters):
+    # First forward and backward pass to calculate the gradients of the loss w.r.t the weights
+    for _ in range(data_loop_iters): # Used for multi-threading in original, not implemented here.
         batch = agent.replay_buffer.sample(training_batch_size)
         states, actions, rewards, next_states, dones = zip(*batch)
         grad_w = None
         for _ in range(iters):
-            # In principle this should be the differentiable loss function
-            # #TODO use Q_loss instead
+
+            # In principle this should be the differentiable loss function, in the DQN agent it is the MSELoss of the Q-values.
             loss = agent.loss(states, actions, rewards, next_states, dones)
             grad_w_p = autograd.grad(loss, weights)
             if grad_w is None:
@@ -37,9 +34,9 @@ def GraSP(agent: DQN, iters: int=10, data_loop_iters: int=10, training_batch_siz
                 for idx in range(len(grad_w)):
                     grad_w[idx] += grad_w_p[idx]
 
-    # Another split data loop
+    # Another forward and backward pass to calculate the gradients of the loss w.r.t the weights
     random.seed = 42
-    for _ in range(data_loop_iters):
+    for _ in range(data_loop_iters): # Used for multi-threading in original, not implemented here.
         batch = agent.replay_buffer.sample(training_batch_size)
         states, actions, rewards, next_states, dones = zip(*batch)
         grad_w = None
@@ -55,7 +52,7 @@ def GraSP(agent: DQN, iters: int=10, data_loop_iters: int=10, training_batch_siz
                 count += 1
         z.backward()
 
-        # Here the mode is used but not sure if necessary
+    # Here the mode is used but not sure if necessary, currently not implemented.
     def grasp_metric(layer):
         if layer.weight.grad is not None:
             return -layer.weight.data * layer.weight.grad

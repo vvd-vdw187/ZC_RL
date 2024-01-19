@@ -72,9 +72,12 @@ class RandomSearch:
             output = model(dummy_input)
         return output.numel()
 
-    def search(self, max_models = 1, zero_cost_warmup = 0, train_iterations = 1000):
-        pool = [] # (i, reward, losses, model) tuples
-        zero_cost_pool = [] # (i, grasp_metric, model) tuples
+    def search(self, max_models = 1, zero_cost_warmup = 0, train_iterations = 1000, warmup_only = False):
+        if warmup_only and zero_cost_warmup == 0:
+            raise RuntimeWarning("warmup_only is set to True and zero_cost_warmup is 0. No models will be trained.")
+        
+        pool = [] # (i, train reward, val reward, model) tuples
+        zero_cost_pool = [] # (i, train reward, val reward, model) tuples
         channels = self.env.observation_space.shape[2]
         action_size = self.env.action_space.n
         if zero_cost_warmup > 0:
@@ -97,20 +100,20 @@ class RandomSearch:
                 print("val reward: ", np.mean(dqn.val_rewards))
                 zero_cost_pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
 
-
-        for i in range(max_models):
-            # sample a random architecture
-            model = self.sample_arch(channels, action_size)
-            # train the model
-            dqn = DQN(model, deepcopy(self.env))
-            dqn.play_and_train(train_iterations)
-            dqn.play()
-            # add the model to the pool
-            pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
-            
-            print("model ", i, " trained:")
-            print("train reward: ", np.mean(dqn.train_rewards))
-            print("val reward: ", np.mean(dqn.val_rewards))
+        if not warmup_only:
+            for i in range(max_models):
+                # sample a random architecture
+                model = self.sample_arch(channels, action_size)
+                # train the model
+                dqn = DQN(model, deepcopy(self.env))
+                dqn.play_and_train(train_iterations)
+                dqn.play()
+                # add the model to the pool
+                pool.append((i,np.mean(dqn.train_rewards), np.mean(dqn.val_rewards), model))
+                
+                print("model ", i, " trained:")
+                print("train reward: ", np.mean(dqn.train_rewards))
+                print("val reward: ", np.mean(dqn.val_rewards))
 
         # Dont print the full models for clarity
         print("pool: ", [item[:3] for item in pool])
